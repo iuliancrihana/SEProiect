@@ -10,9 +10,26 @@ import java.awt.EventQueue;
 public class MainFrame extends JFrame {
 
 	private JPanel contentPane;
-
 	private int peopleSelected;
-	
+
+	/**
+	 * 
+	 * @author IulianC lista conversatiilor campuri: persoana, ip
+	 */
+	class selectedPersons {
+		public String name;
+		public String ip;
+		public int isPaused;
+
+		public selectedPersons(String name, String ip) {
+			this.name = name;
+			this.ip = ip;
+			isPaused = 0;
+		}
+	}
+
+	List<selectedPersons> listPersons = new ArrayList<MainFrame.selectedPersons>();
+
 	JList list;
 	private JTextField nameTextField;
 	private JTextField ipTextField;
@@ -50,6 +67,9 @@ public class MainFrame extends JFrame {
 
 		final DefaultListModel<String> listModel = new DefaultListModel<String>();
 
+		/**
+		 * stergerea din lista de contacte
+		 */
 		JButton removeContactButton = new JButton("Remove");
 		removeContactButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -58,20 +78,44 @@ public class MainFrame extends JFrame {
 				listModel.remove(peopleSelected);
 			}
 		});
+		/*
+		 * adaugarea in lista
+		 */
 		JButton addContactButton = new JButton("Add");
 		addContactButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JButton addButton = (JButton) e.getSource();
 				JPanel listPanel = (JPanel) addButton.getParent();
+				JPanel mainFrame = (JPanel) listPanel.getParent();
 				JPanel addPanel = (JPanel) listPanel.getComponent(0);
 				JList jList = (JList) listPanel.getComponent(1);
 
 				JTextField name = (JTextField) addPanel.getComponent(2);
 				JTextField ip = (JTextField) addPanel.getComponent(3);
 
-				if (!name.getText().trim().equals("")
-						&& !ip.getText().trim().equals(""))
-					listModel.addElement(name.getText() + " " + ip.getText());
+				try {
+
+					if (!name.getText().trim().equals("")
+							&& !ip.getText().trim().equals("")) {
+						Pattern pattern = Pattern
+								.compile("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+						Matcher matcher = pattern.matcher(ip.getText());
+						if (matcher.matches())
+							listModel.addElement(name.getText() + " "
+									+ ip.getText());
+						else {
+							JOptionPane.showMessageDialog(mainFrame,
+									"adresa IP invalida");
+						}
+					} else {
+						JOptionPane.showMessageDialog(mainFrame,
+								"Ambele campuri sunt obligatorii");
+					}
+
+				} catch (PatternSyntaxException ex) {
+					// JOptionPane.showMessageDialog(listPanel, "Error");
+					return;
+				}
 			}
 		});
 		JPanel peoplePanel = new JPanel();
@@ -98,40 +142,39 @@ public class MainFrame extends JFrame {
 
 		list = new JList(listModel);
 		list.addMouseListener(new MouseListener() {
-			
+
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void mousePressed(MouseEvent e) {
-				
-				peopleSelected=list.getSelectedIndex();
-				
-				//JList jList = (JList) e.getSource();
-				//JPanel listPanel = (JPanel) jList.getParent();
-				
-				//JOptionPane.showMessageDialog(listPanel, peopleSelected);
+
+				peopleSelected = list.getSelectedIndex();
+
+				// JList jList = (JList) e.getSource();
+				// JPanel listPanel = (JPanel) jList.getParent();
+				// JOptionPane.showMessageDialog(listPanel, peopleSelected);
 			}
-			
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
 		});
 		list.setForeground(SystemColor.activeCaptionBorder);
@@ -301,10 +344,73 @@ public class MainFrame extends JFrame {
 		listPanel.setLayout(gl_listPanel);
 
 		JButton callButton = new JButton("Call");
+		callButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				JButton callButton = (JButton) e.getSource();
+				JPanel peoplePanel = (JPanel) callButton.getParent();
+				JTabbedPane tabbedPanel = (JTabbedPane) peoplePanel
+						.getComponent(3);
+
+				String listElem = listModel.get(peopleSelected);
+				String[] parsedElem = listElem.split(" ");
+
+				selectedPersons elem = new selectedPersons(parsedElem[0],
+						parsedElem[1]);
+				listPersons.add(elem);
+
+				JPanel jp1 = new JPanel();
+				JLabel text = new JLabel();
+				text.setText("You talk with " + parsedElem[0]);
+				jp1.add(text);
+				jp1.setName(parsedElem[0]);
+				tabbedPanel.addTab(parsedElem[0], jp1);
+			}
+		});
 
 		JButton rejectButton = new JButton("Reject");
+		rejectButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JButton callButton = (JButton) e.getSource();
+				JPanel peoplePanel = (JPanel) callButton.getParent();
+				JTabbedPane tabbedPanel = (JTabbedPane) peoplePanel
+						.getComponent(3);
+
+				tabbedPanel.remove(tabbedPanel.getSelectedIndex());
+			}
+		});
 
 		JButton muteButton = new JButton("Mute");
+		muteButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JButton callButton = (JButton) e.getSource();
+				JPanel peoplePanel = (JPanel) callButton.getParent();
+				JTabbedPane tabbedPanel = (JTabbedPane) peoplePanel
+						.getComponent(3);
+
+				int selectedTab = tabbedPanel.getSelectedIndex();
+				JPanel selectedPanelTab = (JPanel) tabbedPanel
+						.getComponent(selectedTab);
+				JLabel text = (JLabel) selectedPanelTab.getComponent(0);
+
+				for (selectedPersons x : listPersons) {
+					if (selectedPanelTab.getName().equals(x.name)) {
+						if (x.isPaused == 0) {
+							x.isPaused = 1;
+							text.setText("<html><p align=center style=\"width:100px\">You talk with "
+									+ x.name + " Paused" + "</p></html>");
+						} else if (x.isPaused == 1) {
+							x.isPaused = 0;
+
+							text.setText("<html><p align=center style=\"width:100px\">You talk with "
+									+ x.name + " Active" + "</p></html>");
+						}
+						break;
+					}
+				}
+			}
+
+		});
 
 		JSlider volumeSlider = new JSlider();
 		volumeSlider.setBackground(SystemColor.inactiveCaption);
