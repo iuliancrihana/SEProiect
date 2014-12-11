@@ -1,3 +1,13 @@
+package UserInterface;
+
+import java.awt.SystemColor;
+
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+
 /**
 package proiect_UI;
 

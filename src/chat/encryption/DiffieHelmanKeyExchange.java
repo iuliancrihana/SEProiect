@@ -1,3 +1,4 @@
+package chat.encryption;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -7,7 +8,7 @@ import java.security.SecureRandom;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.DHPublicKeySpec;
 
-public class MainClass {
+public class DiffieHelmanKeyExchange {
   public final static int pValue = 47;
 
   public final static int gValue = 71;
