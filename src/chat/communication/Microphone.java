@@ -1,24 +1,29 @@
-/**
- * 
- */
 package chat.communication;
 
 /**
- * @author IulianC
- *
+ * 
  */
-import javax.sound.sampled.*;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
-public class Microphone {
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Mixer;
+import javax.sound.sampled.Port;
+import javax.sound.sampled.TargetDataLine;
 
-	private static final String IP_TO_STREAM_TO = "127.0.0.1";
-	private static final int PORT_TO_STREAM_TO = 9000;
-
+/**
+ * @author IulianC
+ *
+ */
+public class Microphone implements Runnable {
+	Thread t;
+	private String IP_TO_STREAM_TO;// = "192.168.1.104";
+	private int PORT_TO_STREAM_TO;// = 9000;
 	private static DatagramSocket sock;
 
 	/**
@@ -26,8 +31,10 @@ public class Microphone {
 	 * 
 	 * @throws SocketException
 	 */
-	public Microphone() throws SocketException {
-
+	public Microphone(String IP, int port) throws SocketException {
+		IP_TO_STREAM_TO = IP;
+		PORT_TO_STREAM_TO = port;
+		sock = new DatagramSocket();
 	}
 
 	/**
@@ -35,8 +42,36 @@ public class Microphone {
 	 *            the command line arguments
 	 * @throws SocketException
 	 */
-	public static void main(String[] args) throws SocketException {
-		sock = new DatagramSocket();
+
+	private static AudioFormat getAudioFormat() {
+		float sampleRate = 16000.0F;
+		// 8000,11025,16000,22050,44100
+		int sampleSizeInBits = 16;
+		// 8,16
+		int channels = 1;
+		// 1,2
+		boolean signed = true;
+		// true,false
+		boolean bigEndian = false;
+		// true,false
+		return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed,
+				bigEndian);
+	}
+
+	private void sendThruUDP(byte soundpacket[]) {
+		try {
+			// DatagramSocket sock = new DatagramSocket();
+			sock.send(new DatagramPacket(soundpacket, soundpacket.length,
+					InetAddress.getByName(IP_TO_STREAM_TO), PORT_TO_STREAM_TO));
+			// sock.close();
+		} catch (Exception e) {
+			System.out.println(" Unable to send soundpacket using UDP ");
+		}
+
+	}
+
+	@Override
+	public void run() {
 		Mixer.Info minfo[] = AudioSystem.getMixerInfo();
 		for (int i = 0; i < minfo.length; i++) {
 			System.out.println(minfo[i]);
@@ -68,30 +103,11 @@ public class Microphone {
 
 	}
 
-	public static AudioFormat getAudioFormat() {
-		float sampleRate = 8000.0F;
-		// 8000,11025,16000,22050,44100
-		int sampleSizeInBits = 16;
-		// 8,16
-		int channels = 1;
-		// 1,2
-		boolean signed = true;
-		// true,false
-		boolean bigEndian = false;
-		// true,false
-		return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed,
-				bigEndian);
-	}
+	public void start() {
+		if (t == null) {
+			t = new Thread(this);
+			t.start();
 
-	public static void sendThruUDP(byte soundpacket[]) {
-		try {
-			// DatagramSocket sock = new DatagramSocket();
-			sock.send(new DatagramPacket(soundpacket, soundpacket.length,
-					InetAddress.getByName(IP_TO_STREAM_TO), PORT_TO_STREAM_TO));
-			// sock.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println(" Unable to send soundpacket using UDP ");
 		}
 
 	}

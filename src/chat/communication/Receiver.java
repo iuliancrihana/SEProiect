@@ -1,27 +1,29 @@
-/**
- * 
- */
 package chat.communication;
 
 /**
- * @author IulianC
- *
+ * 
  */
-
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.SourceDataLine;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
-public class Speaker extends Thread {
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.SourceDataLine;
 
-	private static final String IP_TO_STREAM_TO = "127.0.0.1";
-	private static final int PORT_TO_STREAM_TO = 9000;
+/**
+ * @author IulianC
+ *
+ */
+public class Receiver implements Runnable {
+
+	Thread t;
+
+	private String IP_TO_STREAM_TO;// = "127.0.0.1";
+	private int PORT_TO_STREAM_TO;// = 9005;
 
 	private static DatagramSocket sock;
 
@@ -30,7 +32,9 @@ public class Speaker extends Thread {
 	 * 
 	 * @throws SocketException
 	 */
-	public Speaker() throws SocketException {
+	public Receiver(String IP, int port) throws SocketException {
+		IP_TO_STREAM_TO = IP;
+		PORT_TO_STREAM_TO = port;
 		sock = new DatagramSocket(PORT_TO_STREAM_TO);
 	}
 
@@ -40,6 +44,7 @@ public class Speaker extends Thread {
 			b = receiveThruUDP();
 			toSpeaker(b);
 		}
+		// System.out.println("Receptorul s-a terminat");
 	}
 
 	/**
@@ -47,14 +52,7 @@ public class Speaker extends Thread {
 	 *            the command line arguments
 	 * @throws SocketException
 	 */
-	public static void main(String[] args) throws SocketException {
-
-		Speaker r = new Speaker();
-		r.start();
-
-	}
-
-	public static byte[] receiveThruUDP() {
+	private byte[] receiveThruUDP() {
 		try {
 
 			byte soundpacket[] = new byte[8192];
@@ -71,7 +69,7 @@ public class Speaker extends Thread {
 
 	}
 
-	public static void toSpeaker(byte soundbytes[]) {
+	private static void toSpeaker(byte soundbytes[]) {
 
 		try {
 			DataLine.Info dataLineInfo = new DataLine.Info(
@@ -90,8 +88,8 @@ public class Speaker extends Thread {
 
 	}
 
-	public static AudioFormat getAudioFormat() {
-		float sampleRate = 8000.0F;
+	private static AudioFormat getAudioFormat() {
+		float sampleRate = 16000.0F;
 		// 8000,11025,16000,22050,44100
 		int sampleSizeInBits = 16;
 		// 8,16
@@ -103,6 +101,17 @@ public class Speaker extends Thread {
 		// true,false
 		return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed,
 				bigEndian);
+	}
+
+	/**
+	 * 
+	 */
+	public void start() {
+		if (t == null) {
+			t = new Thread(this);
+			t.start();
+		}
+
 	}
 
 }
