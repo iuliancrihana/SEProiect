@@ -7,7 +7,7 @@ package chat.communication;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.UnknownHostException;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -18,58 +18,73 @@ import javax.sound.sampled.SourceDataLine;
  * @author IulianC
  *
  */
-public class Receiver implements Runnable {
+public class Receiver {
+	private final Thread t1;/* , t2; */
 
-	Thread t;
+	private volatile boolean x;
+	private byte b[] = null;
 
 	private String IP_TO_STREAM_TO;// = "127.0.0.1";
 	private int PORT_TO_STREAM_TO;// = 9005;
 
-	private static DatagramSocket sock;
+	private byte soundpacket[];
+	private DatagramSocket receiveSock;
+	private DatagramPacket datagram;
 
-	/**
-	 * Creates a new instance of RadioReceiver
-	 * 
-	 * @throws SocketException
-	 */
-	public Receiver(String IP, int port) throws SocketException {
+	public Receiver(String IP, int port, DatagramSocket receiveSocket) {
 		IP_TO_STREAM_TO = IP;
 		PORT_TO_STREAM_TO = port;
-		sock = new DatagramSocket(PORT_TO_STREAM_TO);
+		this.receiveSock = receiveSocket;
+		t1 = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				while (x) {
+					b = receiveThruUDP();
+					toSpeaker(b);
+				}
+				System.out.println("Receptorul s-a terminat");
+			}
+		});
+			init();
+		/*
+		 * t2 = new Thread(new Runnable() {
+		 * 
+		 * @Override public void run() { while (x) {
+		 * System.out.println("thread2 - receiver");
+		 * 
+		 * } System.ou
+		 * .println("Transmiterea de date catre speaker s-a terminat"); } });
+		 */
 	}
 
-	public void run() {
-		byte b[] = null;
-		while (true) {
-			b = receiveThruUDP();
-			toSpeaker(b);
+	private void init(){
+		this.soundpacket = new byte[16000];
+		try {
+			this.datagram = new DatagramPacket(soundpacket, soundpacket.length,
+					InetAddress.getByName(IP_TO_STREAM_TO), PORT_TO_STREAM_TO);
+		} catch (UnknownHostException e) {
+			System.out.println(e.getMessage());
 		}
-		// System.out.println("Receptorul s-a terminat");
+		x = true;
 	}
 
-	/**
-	 * @param args
-	 *            the command line arguments
-	 * @throws SocketException
-	 */
 	private byte[] receiveThruUDP() {
 		try {
 
-			byte soundpacket[] = new byte[8192];
-			DatagramPacket datagram = new DatagramPacket(soundpacket,
-					soundpacket.length, InetAddress.getByName(IP_TO_STREAM_TO),
-					PORT_TO_STREAM_TO);
-			sock.receive(datagram);
-			// sock.close();
+			receiveSock.receive(datagram);
 			return soundpacket;
 		} catch (Exception e) {
-			System.out.println(" Unable to send soundpacket using UDP ");
+			if (e.getMessage().equals("Socket closed")) {
+				x = false;
+			} else
+				System.out.println("error in receive ThruUDP");
 			return null;
 		}
 
 	}
 
-	private static void toSpeaker(byte soundbytes[]) {
+	private void toSpeaker(byte soundbytes[]) {
 
 		try {
 			DataLine.Info dataLineInfo = new DataLine.Info(
@@ -83,35 +98,31 @@ public class Receiver implements Runnable {
 			sourceDataLine.drain();
 			sourceDataLine.close();
 		} catch (Exception e) {
-			System.out.println("not working in speakers ");
+			if (e.getMessage().equals("Socket closed")) {
+				x = false;
+			} else
+				System.out.println("error sending to speakers");
+			System.out.println(e.getMessage());
 		}
 
 	}
 
-	private static AudioFormat getAudioFormat() {
-		float sampleRate = 16000.0F;
-		// 8000,11025,16000,22050,44100
-		int sampleSizeInBits = 16;
-		// 8,16
-		int channels = 1;
-		// 1,2
-		boolean signed = true;
-		// true,false
-		boolean bigEndian = false;
-		// true,false
+	public static AudioFormat getAudioFormat() {
+		float sampleRate = 11025.0F; // 8000,11025,16000,22050,44100
+		int sampleSizeInBits = 16; // 8,16
+		int channels = 1; // 1,2
+		boolean signed = true; // true,false
+		boolean bigEndian = false; // true,false
 		return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed,
 				bigEndian);
 	}
 
-	/**
-	 * 
-	 */
 	public void start() {
-		if (t == null) {
-			t = new Thread(this);
-			t.start();
+		try {
+			t1.start();
+			// t2.start();
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
 		}
-
 	}
-
 }
