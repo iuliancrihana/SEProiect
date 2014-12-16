@@ -1,4 +1,4 @@
-package UserInterface;
+package chat.ui;
 
 import java.awt.EventQueue;
 import java.awt.Font;
@@ -29,11 +29,12 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.border.EmptyBorder;
 
 /**
-package proiect_UI;
-
-import java.awt.EventQueue;
-
-/**
+ * package proiect_UI;
+ * 
+ * import java.awt.EventQueue;
+ * 
+ * /**
+ * 
  * @author IulianC
  *
  */
@@ -405,7 +406,8 @@ public class MainFrame extends JFrame {
 				JPanel peoplePanel = (JPanel) callButton.getParent();
 				JTabbedPane tabbedPanel = (JTabbedPane) peoplePanel
 						.getComponent(3);
-
+				if (tabbedPanel.getComponentCount() == 0)
+					return;
 				tabbedPanel.remove(tabbedPanel.getSelectedIndex());
 			}
 		});

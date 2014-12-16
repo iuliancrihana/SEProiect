@@ -17,7 +17,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 /**
  * @author Razvan
- *
+ * To do: generate random AES key!
  */
 public class AES {
 	String IV;
